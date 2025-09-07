@@ -1,0 +1,32 @@
+services:
+  db:
+    container_name: x-clone-db-dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data-dev:/var/lib/postgresql/data
+
+  redis:
+    container_name: x-clone-redis-dev
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-data-dev:/data
+
+  api:
+    build:
+      target: development
+    container_name: x-clone-api-dev
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./:/app
+    environment:
+      - DB_SOURCE=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      - REDIS_ADDR=redis:6379
+
+volumes:
+  postgres-data-dev:
+    driver: local
+  redis-data-dev:
+    driver: local

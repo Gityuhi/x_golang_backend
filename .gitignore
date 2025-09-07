@@ -1,0 +1,7 @@
+# docker
+.env
+
+# go
+/main
+
+.DS_Store
