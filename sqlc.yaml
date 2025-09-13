@@ -1,0 +1,22 @@
+version: "2"
+sql: 
+    - engine: "postgresql"
+      schema: "db/migrations"
+      queries: "query.sql"
+      # 生成されるGoコードの設定
+      gen:
+        go:
+          emit_json_tags: true
+          package: "gen"
+          out: "internal/gen"
+          sql_package: "pgx/v5"
+          overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+          - db_type: "timestamp"
+            go_type:
+              import: "time"
+              type: "Time"
+

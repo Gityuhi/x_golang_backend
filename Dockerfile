@@ -3,7 +3,7 @@ FROM golang:1.25.0-alpine AS development
 
 WORKDIR /app
 COPY go.mod go.sum ./
-RUN apk add --no-cache git
+RUN apk add --no-cache git postgresql-client redis
 RUN go install github.com/air-verse/air@latest
 
 RUN go mod download 
