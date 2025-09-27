@@ -6,9 +6,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewRouter(uc handler.UserHandler) *gin.Engine {
+func NewRouter(userHandler handler.UserHandler, activateHandler handler.ActivateUser) *gin.Engine {
 	router := gin.Default()
-	router.POST("/signup", uc.SignUp)
-	router.PUT("/activate/:user_id", uc.SignUp)
+	router.POST("/signup", userHandler.SignUp)
+	router.GET("/activate", func(c *gin.Context) {
+		err := activateHandler.Activate(c)
+		if err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(200, gin.H{"message": "アカウントが正常に有効化されました"})
+	})
 	return router
 }

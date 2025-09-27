@@ -1,8 +1,11 @@
 package handler
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"time"
+	"x_golang_api/internal/domain/service"
 	"x_golang_api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
@@ -25,11 +28,15 @@ type UserResponse struct {
 }
 
 type userHandler struct {
-	uu usecase.UserService
+	uu         usecase.UserService
+	mailsender service.EmailSender
 }
 
-func NewUserHandler(uu usecase.UserService) UserHandler {
-	return &userHandler{uu}
+func NewUserHandler(uu usecase.UserService, mailsender service.EmailSender) UserHandler {
+	return &userHandler{
+		uu: uu,
+		mailsender: mailsender,
+	}
 }
 
 func (uc *userHandler) SignUp(c *gin.Context) {
@@ -38,15 +45,26 @@ func (uc *userHandler) SignUp(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	createdUser, err := uc.uu.SignUp(c.Request.Context(), req.Email, req.Password)
+	createdUser, uuid, err := uc.uu.SignUp(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	// activateURLを作成し、emailとともにメソッドの引数に渡す。
+	url := fmt.Sprintf("http://localhost:8080/activate?token=%s", uuid)
+
+	err = uc.mailsender.SendMail(c.Request.Context(), url, createdUser.Email)
+	if err != nil {
+		log.Printf("ERROR: failed to send email: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send confirmation email"})
+		return
+	}
+
 	res := UserResponse{
 		UserID: createdUser.UserID,
 		Email:  createdUser.Email,
         CreatedAt: createdUser.CreatedAt.Format(time.RFC3339),
 	}
+	fmt.Println("メール送信されました。")
 	c.JSON(http.StatusCreated, res)
 }
