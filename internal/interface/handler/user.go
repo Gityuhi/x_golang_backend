@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 	"x_golang_api/internal/domain/service"
 	"x_golang_api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 
@@ -51,7 +53,13 @@ func (uc *userHandler) SignUp(c *gin.Context) {
 		return
 	}
 	// activateURLを作成し、emailとともにメソッドの引数に渡す。
-	url := fmt.Sprintf("http://localhost:8080/activate?token=%s", uuid)
+	err = godotenv.Load()
+	if err != nil {
+		fmt.Println("envファイルの読み込みに失敗しました。")
+	}
+	url := fmt.Sprintf("%s/activate?token=%s", 
+		os.Getenv("URL"),
+		uuid)
 
 	err = uc.mailsender.SendMail(c.Request.Context(), url, createdUser.Email)
 	if err != nil {
