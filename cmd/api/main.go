@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"x_golang_api/internal/infrastructure/email"
 	password_hasher "x_golang_api/internal/infrastructure/password_hasher"
 	"x_golang_api/internal/infrastructure/postgres"
+	redis_repository "x_golang_api/internal/infrastructure/redis"
 	"x_golang_api/internal/interface/handler"
 	"x_golang_api/internal/interface/router"
 	"x_golang_api/internal/usecase"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
@@ -37,10 +40,17 @@ func main() {
 
 	userRepository := postgres.NewUserRepository(pool)
 	passwordHasher := password_hasher.NewBcryptHasher()
-	userService := usecase.NewUserService(userRepository, passwordHasher)
-	userHandler := handler.NewUserHandler(userService)
+	redisClient := redis.NewClient(&redis.Options{
+        Addr: "redis:6379", 
+    })
+	tokenRepository := redis_repository.NewTokenRepository(redisClient)
+	userService := usecase.NewUserService(userRepository, passwordHasher, tokenRepository)
+	activateService := usecase.NewUserActivateService(tokenRepository, userRepository)
+	mailsender := email.NewSendEmail("host.docker.internal", "1025", "", "", "noreply@example.com")
+	userHandler := handler.NewUserHandler(userService, mailsender)
+	activateHandler := handler.NewActivateUser(activateService)
 
-	r := router.NewRouter(userHandler)
+	r := router.NewRouter(userHandler, activateHandler)
 
 	log.Println("Server starting on port 8080...")
 
