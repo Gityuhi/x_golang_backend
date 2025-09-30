@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"x_golang_api/internal/domain/model"
 	"x_golang_api/internal/infrastructure/email"
 	password_hasher "x_golang_api/internal/infrastructure/password_hasher"
 	"x_golang_api/internal/infrastructure/postgres"
@@ -44,7 +45,7 @@ func main() {
         Addr: "redis:6379", 
     })
 	tokenRepository := redis_repository.NewTokenRepository(redisClient)
-	userService := usecase.NewUserService(userRepository, passwordHasher, tokenRepository)
+	userService := usecase.NewUserService(userRepository, passwordHasher, tokenRepository, userRepository.(model.FindByEmail))
 	activateService := usecase.NewUserActivateService(tokenRepository, userRepository)
 	mailsender := email.NewSendEmail("host.docker.internal", "1025", "", "", "noreply@example.com")
 	userHandler := handler.NewUserHandler(userService, mailsender)
