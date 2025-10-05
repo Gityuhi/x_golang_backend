@@ -23,20 +23,17 @@ type userService struct {
 	userRepo         repository.UserRepository
 	tokenRepo        repository.TokenRepository
 	passwordHasher   service.PasswordHasher
-	userFind model.FindByEmail
 }
 
 func NewUserService(
 	ur             repository.UserRepository, 
 	passwordHasher service.PasswordHasher,
 	tr             repository.TokenRepository,
-	userFind       model.FindByEmail,
 ) UserService {
 	return &userService{
 		userRepo:       ur,
 		passwordHasher: passwordHasher, 
 		tokenRepo:      tr,
-		userFind: userFind,
 	}
 }
 
@@ -74,7 +71,7 @@ func (uu *userService) SignUp(ctx context.Context, email, password string) (*mod
 }
 
 func (uu *userService) Login(ctx context.Context, email, password string) (string, error) {
-	user, err := uu.userFind.FindByEmail(ctx, email)
+	user, err := uu.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return "", err
 	}

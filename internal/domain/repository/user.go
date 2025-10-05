@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) (*model.User, error) 
 	ActivateUser(ctx context.Context, userID int32) error
+	FindByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
 
