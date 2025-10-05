@@ -20,6 +20,34 @@ func (q *Queries) ActivateUser(ctx context.Context, userID int32) error {
 	return err
 }
 
+const findByEmail = `-- name: FindByEmail :one
+SELECT user_id, username, email, password_hash, display_name, self_introduction, location, website, date_of_birth, profile_image, header_image, is_active, created_at, updated_at, deleted_at FROM users
+WHERE email = $1
+`
+
+func (q *Queries) FindByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRow(ctx, findByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.DisplayName,
+		&i.SelfIntroduction,
+		&i.Location,
+		&i.Website,
+		&i.DateOfBirth,
+		&i.ProfileImage,
+		&i.HeaderImage,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const insertUser = `-- name: InsertUser :one
 INSERT INTO users (email, password_hash)
 VALUES ($1, $2)

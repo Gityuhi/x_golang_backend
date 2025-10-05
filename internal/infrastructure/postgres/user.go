@@ -46,3 +46,17 @@ func (ur *userRepository) ActivateUser(ctx context.Context, userID int32) error 
 	}
 	return nil
 }
+
+func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
+	user, err := ur.q.FindByEmail(ctx, email)
+	if err != nil {
+		return &model.User{}, err
+	}
+	return &model.User{
+        UserID:         user.UserID,
+        Email:          user.Email,
+        HashedPassword: user.PasswordHash,
+        CreatedAt:      user.CreatedAt.Time,
+    }, nil
+}
+

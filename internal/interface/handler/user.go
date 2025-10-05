@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 	"x_golang_api/internal/domain/service"
 	"x_golang_api/internal/usecase"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 
 type UserHandler interface {
 	SignUp(c *gin.Context) 
+	Login(c *gin.Context)
 }
 
-type SignUpRequest struct {
+type UserRequest struct {
     Email    string `json:"email" binding:"required,email"`
     Password string `json:"password" binding:"required,min=8"`
 }
@@ -41,8 +40,9 @@ func NewUserHandler(uu usecase.UserService, mailsender service.EmailSender) User
 	}
 }
 
+
 func (uc *userHandler) SignUp(c *gin.Context) {
-	var req SignUpRequest
+	var req UserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -53,13 +53,7 @@ func (uc *userHandler) SignUp(c *gin.Context) {
 		return
 	}
 	// activateURLを作成し、emailとともにメソッドの引数に渡す。
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Println("envファイルの読み込みに失敗しました。")
-	}
-	url := fmt.Sprintf("%s/activate?token=%s", 
-		os.Getenv("URL"),
-		uuid)
+	url := fmt.Sprintf("http://localhost:8080/activate?token=%s", uuid)
 
 	err = uc.mailsender.SendMail(c.Request.Context(), url, createdUser.Email)
 	if err != nil {
@@ -75,4 +69,24 @@ func (uc *userHandler) SignUp(c *gin.Context) {
 	}
 	fmt.Println("メール送信されました。")
 	c.JSON(http.StatusCreated, res)
+}
+
+func (ul *userHandler) Login(c *gin.Context) {
+	var req UserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	token, err := ul.uu.Login(c.Request.Context(), req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	
+	cookie := new(http.Cookie)
+	cookie.Value = token
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("jwt", cookie.Value, 3600 * 12, "/", "localhost", true, true)
+	c.JSON(http.StatusAccepted, gin.H{"success": "ログインに成功しました。"})
 }

@@ -7,3 +7,7 @@
 .DS_Store
 
 tmp/build-errors.log
+
+# Environment variables
+.env
+.env.*

@@ -9,6 +9,7 @@ import (
 func NewRouter(userHandler handler.UserHandler, activateHandler handler.ActivateUser) *gin.Engine {
 	router := gin.Default()
 	router.POST("/signup", userHandler.SignUp)
+	router.POST("/login", userHandler.Login)
 	router.GET("/activate", func(c *gin.Context) {
 		err := activateHandler.Activate(c)
 		if err != nil {
