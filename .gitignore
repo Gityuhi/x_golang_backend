@@ -11,3 +11,4 @@ tmp/build-errors.log
 # Environment variables
 .env
 .env.*
+!.env.example
